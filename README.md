@@ -4,9 +4,7 @@ There are many `auto-ls`s out there but this one is mine.
 
 # Features
 
-- Custom command on `cwd`/`enter-key`
-- Auto `ls` on `cwd`
-- Auto `ls` on `enter-key` (with empty buffer)
+- Auto `ls` when cwd is not the same as the last cwd
 - Git status on a git work tree
 
 # Install
@@ -39,9 +37,9 @@ Example: `AUTO_LS_NEWLINE=false`
 
 Example: `AUTO_LS_PATH=false`
 
--  `AUTO_LS_CHPWD`: Enable/disable auto-ls on directory change (Default: true)
+-  `AUTO_LS_PRECMD`: Enable/disable auto-ls on directory change (Default: true)
 
-Example: `AUTO_LS_CHPWD=false`
+Example: `AUTO_LS_PRECMD=false`
 
 # Customization
 
@@ -77,7 +75,3 @@ You may as well load the default functions, `ls` and `git-status`:
 
      AUTO_LS_COMMANDS=(ls git-status custom_function)
 
-# Future
-
-- `zstyle` options to customize ls options
-- `zstyle` options to customize git status

@@ -1,8 +1,8 @@
 # vim: sw=2 ts=2 et!
 # set up default functions
 
-if (( ! ${+AUTO_LS_CHPWD} )); then
-  AUTO_LS_CHPWD=true
+if (( ! ${+AUTO_LS_PRECMD} )); then
+  AUTO_LS_PRECMD=true
 fi
 
 if [[ $#AUTO_LS_COMMANDS -eq 0 ]]; then
@@ -30,45 +30,28 @@ auto-ls-git-status () {
 }
 
 auto-ls () {
-  # Possible invocation sources:
-  #  1. Called from `chpwd_functions` – show file list
-  #  2. Called by another ZLE plugin (like `dirhistory`) through `zle accept-line` – show file list
-  #  3. Called by ZLE itself – only should file list if prompt was empty
-  if ! zle                          \
-  || { [[ ${WIDGET} != accept-line ]] && [[ ${LASTWIDGET} != .accept-line ]] }\
-  || { [[ ${WIDGET} == accept-line ]] && [[ $#BUFFER -eq 0 ]] }; then
-    zle && echo
-    for cmd in $AUTO_LS_COMMANDS; do
-      # If we detect a command with full path, ex: /bin/ls execute it
-      if [[ $AUTO_LS_PATH != false && $cmd =~ '/' ]]; then
-        eval $cmd
-      else
-        # Otherwise run auto-ls function
-        auto-ls-$cmd
-      fi
-    done
-    zle && zle .accept-line
+  if (( ! ${+AUTO_LS_OLDPWD} )); then
+      AUTO_LS_OLDPWD="$PWD"
+  fi 
+
+  # Only do anything if PWD changed and printing to terminal
+  if [ "$AUTO_LS_OLDPWD" = "$PWD" ] || [ ! -t 1 ]; then
+      return
   fi
 
-  # Forward this event down the ZLE stack
-  if zle; then
-    if [[ ${WIDGET} == accept-line ]] && [[ $#BUFFER -eq 0 ]]; then
-      # Shortcut to reduce the number of empty lines appearing
-      # when pressing Enter
-      echo && zle redisplay
-    elif [[ ${WIDGET} != accept-line ]] && [[ ${LASTWIDGET} == .accept-line ]]; then
-      # Hack to make only 2 lines appear after `dirlist` navigation
-      # (Uses a VT100 escape sequence to move curser up one line…)
-      tput cuu 1
+  AUTO_LS_OLDPWD="$PWD"
+
+  for cmd in $AUTO_LS_COMMANDS; do
+    # If we detect a command with full path, ex: /bin/ls execute it
+    if [[ $AUTO_LS_PATH != false && $cmd =~ '/' ]]; then
+      eval $cmd
     else
-      zle .accept-line
+      # Otherwise run auto-ls function
+      auto-ls-$cmd
     fi
-  fi
+  done
 }
 
-zle -N auto-ls
-zle -N accept-line auto-ls
-
-if [[ ${AUTO_LS_CHPWD} == true && ${chpwd_functions[(I)auto-ls]} -eq 0 ]]; then
-  chpwd_functions+=(auto-ls)
+if [[ ${AUTO_LS_PRECMD} == true && ${precmd_functions[(I)auto-ls]} -eq 0 ]]; then
+  precmd_functions+=(auto-ls)
 fi
